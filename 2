@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vocabulary Crush - iPad Ready</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* 少女風配色盤 */
+            --primary-pink: #fd79a8;
+            --secondary-purple: #a29bfe;
+            --soft-bg: linear-gradient(135deg, #ffeafc 0%, #e8e0ff 100%);
+            --sidebar-bg: #fff0f6;
+            --card-bg: #ffffff;
+            --text-dark: #636e72;
+            --text-light: #b2bec3;
+            --wrong-soft: #fab1a0;
+            --correct-soft: #55efc4;
+        }
+
+        body {
+            font-family: 'Quicksand', 'Segoe UI', sans-serif;
+            background: var(--soft-bg);
+            color: var(--text-dark);
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+            -webkit-tap-highlight-color: transparent; /* 移除點擊時的藍色框框 */
+        }
+
+        /* 左側遊戲區 */
+        .game-area {
+            flex: 2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            padding: 20px;
+        }
+
+        .game-card {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 30px;
+            box-shadow: 0 15px 35px rgba(253, 121, 168, 0.2);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            border: 3px solid #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* 右側側邊欄 */
+        .sidebar {
+            flex: 1;
+            background: var(--sidebar-bg);
+            color: var(--text-dark);
+            padding: 25px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch; /* 讓 iPad 滾動更順暢 */
+            box-shadow: -5px 0 20px rgba(162, 155, 254, 0.1);
+            max-width: 400px;
+            min-width: 320px;
+            display: flex;
+            flex-direction: column;
+            border-left: 2px solid #ffddec;
+        }
+
+        .sidebar h3 {
+            color: var(--secondary-purple);
+            border-bottom: 2px dashed var(--primary-pink);
+            padding-bottom: 15px;
+            margin-top: 0;
+            font-size: 1.5rem;
+        }
+
+        /* 錯題卡片樣式 */
+        .mistake-card {
+            background: white;
+            border: 2px solid var(--primary-pink);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 15px rgba(253, 121, 168, 0.1);
+            animation: slideIn 0.5s ease;
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mistake-card::after {
+            content: '';
+            position: absolute;
+            top: -10px; right: -10px;
+            width: 30px; height: 30px;
+            background: var(--secondary-purple);
+            border-radius: 50%;
+            opacity: 0.2;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .m-word { font-size: 1.3rem; font-weight: 700; color: var(--primary-pink); display: flex; align-items: center; gap: 10px; }
+        .m-zh { color: var(--text-dark); font-size: 1rem; margin: 8px 0; font-weight: 500;}
+
+        /* 發音按鈕 */
+        .audio-btn {
+            background: var(--primary-pink);
+            color: white;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1rem;
+            transition: 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            /* 防止 iOS 雙點擊縮放 */
+            touch-action: manipulation; 
+        }
+        .audio-btn:active { transform: scale(0.9); background: var(--secondary-purple); }
+
+        .dict-link {
+            display: block;
+            text-decoration: none;
+            background-color: #f0edff;
+            color: var(--secondary-purple);
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            border: 1px dashed var(--secondary-purple);
+            transition: 0.2s;
+        }
+
+        /* 遊戲介面元件 */
+        .status-header { display: flex; justify-content: space-between; color: var(--text-light); font-weight: bold; margin-bottom: 20px;}
+        .score-pill { background: var(--secondary-purple); color: white; padding: 5px 15px; border-radius: 20px; }
+
+        .q-text { font-size: 2rem; font-weight: 700; color: var(--secondary-purple); margin: 20px 0; min-height: 60px; display:flex; align-items:center; justify-content:center;}
+        
+        input[type="text"] {
+            width: 100%; padding: 15px; font-size: 1.2rem; color: var(--text-dark);
+            border: 3px solid #ffeaa7; border-radius: 15px;
+            text-align: center; outline: none; box-sizing: border-box;
+            background: #fffdf0;
+            font-family: 'Quicksand', sans-serif;
+            transition: 0.3s;
+            /* 修正 iOS 輸入框圓角與陰影 */
+            -webkit-appearance: none;
+        }
+        input[type="text"]:focus { border-color: var(--primary-pink); background: white; }
+        
+        .btn {
+            width: 100%; padding: 15px; margin-top: 20px;
+            background: var(--primary-pink); color: white; border: none;
+            border-radius: 50px;
+            font-size: 1.2rem; font-weight: bold; cursor: pointer;
+            transition: 0.1s; font-family: 'Quicksand', sans-serif;
+            box-shadow: 0 8px 15px rgba(253, 121, 168, 0.3);
+            /* 防止 iOS 雙點擊縮放 */
+            touch-action: manipulation;
+        }
+        .btn:active { transform: scale(0.98); background: var(--secondary-purple); }
+
+        .feedback { min-height: 30px; margin-top: 20px; font-weight: bold; font-size: 1.1rem;}
+        .msg-correct { color: var(--correct-soft); }
+        .msg-wrong { color: var(--wrong-soft); }
+
+        .progress-container { height: 10px; background: #ffeafc; margin-top: 30px; border-radius: 5px; overflow: hidden;}
+        .progress-fill { height: 100%; background: linear-gradient(to right, var(--primary-pink), var(--secondary-purple)); width: 0%; transition: 0.5s ease-out; border-radius: 5px;}
+
+        /* 手機/iPad 版響應式調整 */
+        @media (max-width: 1024px) {
+            body { flex-direction: column; overflow: auto; }
+            .sidebar { 
+                max-width: 100%; 
+                min-height: 400px; 
+                border-left: none; 
+                border-top: 3px dashed var(--primary-pink); 
+                order: 2; /* 確保側邊欄在下面 */
+            }
+            .game-area { min-height: 70vh; padding: 10px; order: 1;}
+            .q-text { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-area">
+        <div class="game-card" id="gamePanel">
+            <div class="status-header">
+                <span id="roundInfo">Batch 1</span>
+                <span class="score-pill">Score: <span id="scoreVal">0</span> ✨</span>
+            </div>
+
+            <div class="q-text" id="questionDisplay">Loading...</div>
+
+            <input type="text" id="answerInput" placeholder="Type here..." autocomplete="off">
+            <button class="btn" id="submitBtn" onclick="checkAnswer()">Submit Answer 💖</button>
+
+            <div class="feedback" id="feedbackMsg"></div>
+            
+            <div class="progress-container">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+        <div class="game-card" id="summaryPanel" style="display:none;">
+            <h2 style="color: var(--secondary-purple)">📝 Round Complete!</h2>
+            <p>Score: <strong id="finalScore" style="font-size:2.5rem; color:var(--primary-pink)">0</strong></p>
+            <p id="summaryText" style="color: var(--text-light)">Check below for mistakes & audio!</p>
+            <button class="btn" onclick="nextBatch()">Next Round 🚀</button>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <h3>📕 Mistake Notebook</h3>
+        <p style="font-size:0.9rem; color: var(--text-light);">Tap 🔊 to hear the voice.</p>
+        <div id="sidebarContent"></div>
+    </div>
+
+    <script>
+        const vocabDB = {
+            "notice": "注意到；留意", "complete": "完成；結束", "succeed": "成功", 
+            "realize": "了解；領悟", "regret": "後悔；感到遺憾", "survive": "生存；存活", 
+            "affect": "影響", "remember": "記得；想起", "believe": "相信", 
+            "remind": "提醒", "blame": "指責；責怪", "surprise": "使驚奇；使感到意外", 
+            "bother": "打擾；麻煩", "bathe": "洗澡", "confuse": "使困惑；混淆", 
+            "beat": "敲打；打敗；勝過", "catch": "捕捉；感染", "break": "打破；打斷；弄壞", 
+            "clap": "鼓掌", "carry": "拿；搬；攜帶", "divide": "分割；除以（數學）", 
+            "chase": "追趕；追求", "doubt": "懷疑；不相信", "cheat": "欺騙；作弊", 
+            "ease": "減輕；緩和", "choose": "選擇；挑選", "embarrass": "使尷尬", 
+            "control": "控制", "forgive": "原諒", "collect": "收集；募捐", 
+            "forget": "忘記", "comment": "評論；發表意見", "frighten": "使害怕", 
+            "count": "數；計算", "gather": "收集；聚集", "cover": "遮蔽；包含", 
+            "guess": "猜測", "dial": "撥號", "imagine": "想像；料想", 
+            "deliver": "運送；分娩", "greet": "問候", "offer": "提供"
+        };
+
+        const wordList = Object.keys(vocabDB);
+        let shuffledList = [];
+        let currentIndex = 0;
+        let batchSize = 10;
+        let batchQuestions = [];
+        let batchIndex = 0;
+        let score = 0;
+        let isWaiting = false;
+
+        // *** iPad 音效修復重點 ***
+        let voices = [];
+        function loadVoices() {
+            voices = window.speechSynthesis.getVoices();
+        }
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+
+        function speak(word) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); // 停止目前聲音
+                const utterance = new SpeechSynthesisUtterance(word);
+                
+                // 1. 強制尋找英文發音 (解決 iPad 用中文唸英文的問題)
+                // 優先找 Google US, 其次找 Microsoft US, 最後找任何開頭是 en 的
+                let selectedVoice = voices.find(v => v.name.includes("Google US English")) || 
+                                    voices.find(v => v.name.includes("Samantha")) || 
+                                    voices.find(v => v.lang.startsWith("en"));
+                
+                if (selectedVoice) {
+                    utterance.voice = selectedVoice;
+                }
+                
+                // 2. 移除 Pitch/Rate 的極端設定，使用預設值以確保 iOS 相容性
+                utterance.lang = 'en-US'; 
+                // utterance.rate = 1; // 保持預設
+                // utterance.pitch = 1; // 保持預設
+                
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function initGame() {
+            shuffledList = wordList.sort(() => Math.random() - 0.5);
+            currentIndex = 0;
+            document.getElementById("sidebarContent").innerHTML = "";
+            startNextBatch();
+            loadVoices(); // 確保聲音載入
+        }
+
+        function startNextBatch() {
+            if (currentIndex >= shuffledList.length) {
+                alert("🎉 All done! Starting over.");
+                initGame();
+                return;
+            }
+
+            batchQuestions = shuffledList.slice(currentIndex, currentIndex + batchSize);
+            batchIndex = 0;
+            score = 0;
+            
+            document.getElementById("summaryPanel").style.display = "none";
+            document.getElementById("gamePanel").style.display = "flex";
+            document.getElementById("scoreVal").innerText = "0";
+            
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            if (batchIndex >= batchQuestions.length) {
+                showSummary();
+                return;
+            }
+
+            const enWord = batchQuestions[batchIndex];
+            const zhMeaning = vocabDB[enWord];
+
+            document.getElementById("questionDisplay").innerText = zhMeaning;
+            document.getElementById("roundInfo").innerText = `Batch ${Math.floor(currentIndex/batchSize)+1} | Q${batchIndex+1}`;
+            document.getElementById("answerInput").value = "";
+            document.getElementById("feedbackMsg").innerText = "";
+            document.getElementById("answerInput").focus();
+            
+            let pct = (batchIndex / batchQuestions.length) * 100;
+            document.getElementById("progressFill").style.width = `${pct}%`;
+        }
+
+        function checkAnswer() {
+            if (isWaiting) return;
+            const inputEl = document.getElementById("answerInput");
+            const input = inputEl.value.trim().toLowerCase();
+            const correctWord = batchQuestions[batchIndex];
+            
+            if (!input) return;
+            
+            // 隱藏鍵盤 (iPad 優化)
+            // inputEl.blur(); 
+            
+            isWaiting = true;
+            const fb = document.getElementById("feedbackMsg");
+            
+            speak(correctWord);
+
+            if (input === correctWord) {
+                score += 10;
+                document.getElementById("scoreVal").innerText = score;
+                fb.innerHTML = `<span class="msg-correct">✨ Correct!</span>`;
+                setTimeout(nextQ, 1000);
+            } else {
+                fb.innerHTML = `<span class="msg-wrong">💧 It's: ${correctWord}</span>`;
+                addToSidebar(correctWord);
+                setTimeout(nextQ, 2500);
+            }
+        }
+
+        function nextQ() {
+            isWaiting = false;
+            batchIndex++;
+            loadQuestion();
+        }
+
+        function addToSidebar(word) {
+            const zhMeaning = vocabDB[word];
+            const container = document.getElementById("sidebarContent");
+            if (document.getElementById(`mistake-${word}`)) return;
+            const dictUrl = `https://dictionary.cambridge.org/dictionary/english-chinese-traditional/${word}`;
+
+            const card = document.createElement("div");
+            card.className = "mistake-card";
+            card.id = `mistake-${word}`;
+            card.innerHTML = `
+                <div class="m-word">
+                    🌸 ${word} 
+                    <button class="audio-btn" onclick="speak('${word}')">🔊</button>
+                </div>
+                <div class="m-zh">${zhMeaning}</div>
+                <a href="${dictUrl}" target="_blank" class="dict-link">📖 Dictionary</a>
+            `;
+            container.prepend(card);
+        }
+
+        function showSummary() {
+            document.getElementById("gamePanel").style.display = "none";
+            document.getElementById("summaryPanel").style.display = "flex";
+            document.getElementById("finalScore").innerText = score;
+            currentIndex += batchSize;
+        }
+
+        function nextBatch() {
+            startNextBatch();
+        }
+
+        // *** iPad 分數不跳修復重點 ***
+        // 使用 keydown 而不是 keypress，並阻止預設行為
+        document.getElementById("answerInput").addEventListener("keydown", (e) => {
+            if(e.key === "Enter") {
+                e.preventDefault(); // 1. 阻止 iPad 自動提交表單/刷新頁面
+                checkAnswer();      // 2. 執行檢查
+            }
+        });
+
+        initGame();
+
+    </script>
+</body>
+</html>
